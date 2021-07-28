@@ -17,10 +17,12 @@ class SentenceDataset(Dataset):
         self.tokenizer = BertTokenizerFast.from_pretrained(vocab_path)
         self.max_length = max_length
         self.sentence, self.labels = self.__get_data(data_path)
-        self.encodings = self.__get_encondings()
 
     def __getitem__(self, index):
-        item = {key: torch.tensor(val[index]) for key, val in self.encodings.items()}
+        encoding = self.tokenizer.encode_plus(self.sentence[index], truncation=True, padding='max_length',
+                                              max_length=self.max_length,
+                                              return_tensors="pt")
+        item = {key: torch.tensor(val.squeeze()) for key, val in encoding.items()}  # val的shape为[1,128],要转为128，把1维去掉
         item['labels'] = torch.tensor(int(self.labels[index]))
         return item
 
@@ -31,12 +33,6 @@ class SentenceDataset(Dataset):
     def __get_data(dir):
         sentence, label = load_data(dir)
         return sentence, label
-
-    def __get_encondings(self):
-        encodings = self.tokenizer.batch_encode_plus(self.sentence, truncation=True, padding=True,
-                                                     max_length=self.max_length,
-                                                     return_tensors="pt")
-        return encodings
 
 
 class AbstractDataset(Dataset):

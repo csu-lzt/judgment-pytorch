@@ -16,7 +16,6 @@ import warnings, time
 warnings.filterwarnings('ignore')
 plm_path = 'chinese-roberta-wwm-ext'  # 该文件夹下存放三个文件（'vocab.txt', 'pytorch_model.bin', 'config.json'）
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-writer = SummaryWriter('runs/ClassifyModel2.0')
 
 ### 1. 这种方式是不需要手动下载模型文件，在网速快的时候使用
 # tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
@@ -47,9 +46,10 @@ class SentenceClassifyModel(nn.Module):
 
 
 class ModelTrainer(object):
-    def __init__(self, model, epochs, batch_size):
+    def __init__(self, model, epochs, batch_size, writer, is_visual=False):
         self.model = model
         self.epochs = epochs
+        self.writer = writer
         self.best_model_path = "model/best_model.pth"
         self.most_model_path = "model/most_model.pth"
         self.best_acc = 0.0
@@ -59,7 +59,8 @@ class ModelTrainer(object):
         self.test_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=0, pin_memory=True)
         self.steps = len(self.train_loader)
         self.get_parameter_number()
-        self.model_visual()
+        if is_visual:  # 是否要模型可视化
+            self.model_visual()
 
     def get_parameter_number(self):
         # 打印模型参数量
@@ -105,19 +106,20 @@ class ModelTrainer(object):
                               train_loss_sum / batch_index, train_accuracy / batch_index,
                               optimizer.state_dict()['param_groups'][0]['lr']),
                       end='', flush=True)
-                writer.add_scalar(tag='loss', scalar_value=train_loss_sum / batch_index,
-                                  global_step=(epoch_index - 1) * self.steps + batch_index)
-                writer.add_scalar(tag='training accuracy', scalar_value=train_accuracy / batch_index,
-                                  global_step=(epoch_index - 1) * self.steps + batch_index)
-                writer.add_scalar(tag='learning rate', scalar_value=optimizer.state_dict()['param_groups'][0]['lr'],
-                                  global_step=(epoch_index - 1) * self.steps + batch_index)
+                self.writer.add_scalar(tag='loss', scalar_value=train_loss_sum / batch_index,
+                                       global_step=(epoch_index - 1) * self.steps + batch_index)
+                self.writer.add_scalar(tag='training accuracy', scalar_value=train_accuracy / batch_index,
+                                       global_step=(epoch_index - 1) * self.steps + batch_index)
+                self.writer.add_scalar(tag='learning rate',
+                                       scalar_value=optimizer.state_dict()['param_groups'][0]['lr'],
+                                       global_step=(epoch_index - 1) * self.steps + batch_index)
                 # print('\n', "Learning rate = {}".format(optimizer.state_dict()['param_groups'][0]['lr']), end='',
                 #       flush=True)
             print('\n')
             # 验证
             acc = self.model_valid(data_loader=self.valid_loader, desc='Validing.......')
-            writer.add_scalar(tag='valid accuracy', scalar_value=acc,
-                              global_step=epoch_index)
+            self.writer.add_scalar(tag='valid accuracy', scalar_value=acc,
+                                   global_step=epoch_index)
             if acc > self.best_acc:
                 self.best_acc = acc
                 torch.save(self.model.state_dict(), self.best_model_path)
@@ -163,12 +165,13 @@ class ModelTrainer(object):
 
     def model_visual(self):  # tensorboard可视化
         sample = next(iter(self.train_loader))
-        writer.add_graph(self.model,
-                         input_to_model=(sample['input_ids'].to(device), sample['attention_mask'].to(device)))
+        self.writer.add_graph(self.model,
+                              input_to_model=(sample['input_ids'].to(device), sample['attention_mask'].to(device)))
 
 
 classify_model = SentenceClassifyModel(plm_path).to(device)
-classify_model_train = ModelTrainer(model=classify_model, epochs=2, batch_size=4)
+writer = SummaryWriter('runs/ClassifyModel2.0')  # tensorboard的可视化写入器以及对应的写入路径
+classify_model_train = ModelTrainer(model=classify_model, epochs=2, batch_size=4, writer=writer, is_visual=True)
 classify_model_train.model_train()
 classify_model_train.model_test()
 
