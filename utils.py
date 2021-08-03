@@ -1,5 +1,5 @@
 # -*- coding:utf-8 -*-
-import json, jieba, re, copy, docx, os
+import json, jieba, re, copy, docx, os, xlwt
 from tqdm import tqdm
 import numpy as np
 
@@ -212,7 +212,7 @@ def del_file(path):
             del_file(file_data)
 
 
-def write_file(sentences, label1, pre_label1, gold, pred, i, path):
+def write_docx(sentences, label1, pre_label1, gold, pred, i, path):
     '''
     :param sentences: 裁判文书句子列表
     :param label1: 真实关键句列表
@@ -221,7 +221,7 @@ def write_file(sentences, label1, pre_label1, gold, pred, i, path):
     :param pred: 生成摘要
     :param i: 文书序号
     :param path: 写入的文件夹路径（相对），最后不加/
-    :return: 无，写入各个word文档
+    :return: 无，写入各个word文档,并用色彩区分不同的句子类型
     '''
     from docx.oxml.ns import qn
     from docx.shared import RGBColor
@@ -285,19 +285,80 @@ def select_summary(data_path='data/select_76_data/data_76.json', pred_path='data
         rouge_all += rouge
         if rouge > high_socre:
             file_path = 'word_judgment/higher'
-            write_file(sentences, label1, pre_label1, gold, pred, i, file_path)
+            write_docx(sentences, label1, pre_label1, gold, pred, i, file_path)
         elif rouge > 50 and rouge < 51:
             file_path = 'word_judgment/middle'
-            write_file(sentences, label1, pre_label1, gold, pred, i, file_path)
+            write_docx(sentences, label1, pre_label1, gold, pred, i, file_path)
         elif rouge < 35:
             file_path = 'word_judgment/lower'
-            write_file(sentences, label1, pre_label1, gold, pred, i, file_path)
+            write_docx(sentences, label1, pre_label1, gold, pred, i, file_path)
             print(pred, gold)
     print(rouge_all / 76)
 
 
+def write_excel(index, data_path='data/data_all.json'):
+    # 创建excel工作表
+    workbook = xlwt.Workbook(encoding='utf-8')
+    worksheet = workbook.add_sheet('sheet1')
+    # 设置表头
+    worksheet.write(0, 0, label='序号')
+    worksheet.write(0, 1, label='ID')
+    worksheet.write(0, 2, label='参考摘要')
+    worksheet.write(0, 3, label='句子')
+    worksheet.write(0, 4, label='参考标签')
+    worksheet.write(0, 5, label='标签1')
+    worksheet.write(0, 6, label='标签2')
+    # 设置表格每列宽度
+    worksheet.col(0).width = 1000
+    worksheet.col(1).width = 1000
+    worksheet.col(2).width = 14500
+    worksheet.col(3).width = 20000
+    worksheet.col(4).width = 2000
+    worksheet.col(5).width = 2000
+    worksheet.col(6).width = 2000
+    # 读文件并写入excel
+    with open(data_path, 'r', encoding="utf8") as f:
+        start_book_id = (index - 1) * 10
+        end_book_id = (index - 1) * 10 + 10
+        book_id = 0  # 文书序号
+        raw_id = 1  # 行号
+        for line in tqdm(f):
+            book_id += 1
+            if book_id < start_book_id:
+                continue
+            elif book_id > end_book_id:
+                break
+            sentence_list = []
+            label_list = []
+            data = json.loads(line)
+            id = data.get('id')
+            summary = data.get('summary')
+            text = data.get('text')
+            for item in text:
+                sentence = item['sentence'].strip().replace('\u3000', '')
+                if re.search("&#xD", sentence) or len(sentence) < 4 or re.compile(
+                        r'^[-+]?[-0-9]\d*\.\d*|[-+]?\.?[0-9]\d*$').match(sentence):  ##基于正则规则，过滤一些杂乱的句子
+                    continue
+                sentence_list.append(sentence)
+                label_list.append(item["label"])
+            n = len(label_list)  # 一篇文书有n句话
+            # 合并单元格
+            # table.write_merge(x, x + m, y, y + n, string, style)
+            # x表示行，y表示列，m表示跨行个数，n表示跨列个数，string表示要写入的单元格内容，style表示单元格样式。
+            worksheet.write_merge(raw_id, raw_id + n - 1, 0, 0, book_id)
+            worksheet.write_merge(raw_id, raw_id + n - 1, 1, 1, id)
+            worksheet.write_merge(raw_id, raw_id + n - 1, 2, 2, summary)
+            for i in range(n):
+                worksheet.write(raw_id + i, 3, sentence_list[i])
+                worksheet.write(raw_id + i, 4, label_list[i])
+            raw_id += n
+    save_path = f'excel_judgment/{index}.xlsx'
+    workbook.save(save_path)
+
+
 if __name__ == '__main__':
-    del_file('word_judgment/higher')
-    del_file('word_judgment/middle')
-    del_file('word_judgment/lower')
-    select_summary()
+    # del_file('word_judgment/higher')
+    # del_file('word_judgment/middle')
+    # del_file('word_judgment/lower')
+    # select_summary()
+    write_excel(1)
