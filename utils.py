@@ -6,28 +6,34 @@ import numpy as np
 
 ##一些工具性函数，包括数据读取和分割等
 
-def load_data(json_filename):
+def load_data(json_filename, return_length=False):
     """加载数据
     返回：[[text1各个句子组成的列表],[text2各个句子组成的列表]...]
     修改后：返回 [text各个句子组成的列表]，[对应标签的列表]
     """
     Sentence = []
     Label = []
+    Length = []  # 每篇裁判文书有多少个句子
     with open(json_filename, 'r', encoding="utf8") as f:
         for line in tqdm(f, desc=u'读取数据中'):
             data = json.loads(line)
             single_text = data.get('text')
             # sentences_in_onetext = []
+            length = 0
             for i, item in enumerate(single_text):
                 sentence = item['sentence'].strip().replace('\u3000', '')
                 if re.search("&#xD", sentence) or len(sentence) < 4 or re.compile(
                         r'^[-+]?[-0-9]\d*\.\d*|[-+]?\.?[0-9]\d*$').match(sentence):  ##基于正则规则，过滤一些杂乱的句子
                     continue  # 处理后最大句子数量为244，<256
                 # sentences_in_onetext.append(sentence)
+                length += 1
                 Sentence.append(sentence)
                 Label.append(item['label'])
+            Length.append(length)
             # print('len of text list', len(texts),texts)  作者自己分的句，所以句子多，len(texts)长
             # D.append(sentences_in_onetext)
+    if return_length == True:
+        return Sentence, Label, Length
     return Sentence, Label
 
 
@@ -306,8 +312,8 @@ def write_excel(index, data_path='data/data_all.json'):
     worksheet.write(0, 2, label='参考摘要')
     worksheet.write(0, 3, label='句子')
     worksheet.write(0, 4, label='参考标签')
-    worksheet.write(0, 5, label='标签1')
-    worksheet.write(0, 6, label='标签2')
+    worksheet.write(0, 5, label='标签A')
+    worksheet.write(0, 6, label='标签B')
     # 设置表格每列宽度
     worksheet.col(0).width = 1000
     worksheet.col(1).width = 1000
@@ -319,7 +325,7 @@ def write_excel(index, data_path='data/data_all.json'):
     # 读文件并写入excel
     with open(data_path, 'r', encoding="utf8") as f:
         start_book_id = (index - 1) * 10
-        end_book_id = (index - 1) * 10 + 10
+        end_book_id = (index - 1) * 10 + 1
         book_id = 0  # 文书序号
         raw_id = 1  # 行号
         for line in tqdm(f):
@@ -361,4 +367,7 @@ if __name__ == '__main__':
     # del_file('word_judgment/middle')
     # del_file('word_judgment/lower')
     # select_summary()
-    write_excel(1)
+    # write_excel(6)
+    # for i in range(5):
+    #     write_excel(i+1)
+    load_data('data/classify_data/valid_data.json')

@@ -14,9 +14,10 @@ class SentenceDataset(Dataset):
     # 能够通过index得到数据集的数据，能够通过len，得到数据集大小
 
     def __init__(self, data_path, vocab_path='chinese-roberta-wwm-ext', max_length=128):
+        self.data_path = data_path
         self.tokenizer = BertTokenizerFast.from_pretrained(vocab_path)
         self.max_length = max_length
-        self.sentence, self.labels = self.__get_data(data_path)
+        self.sentence, self.labels, self.length = self.__get_data(data_path)
 
     def __getitem__(self, index):
         encoding = self.tokenizer.encode_plus(self.sentence[index], truncation=True, padding='max_length',
@@ -31,8 +32,11 @@ class SentenceDataset(Dataset):
 
     @staticmethod  # 静态方法，此方法不传入代表实例对象的self参数，并且不强制要求传递任何参数，可以被类直接调用，当然实例化的对象也可以调用。
     def __get_data(dir):
-        sentence, label = load_data(dir)
-        return sentence, label
+        sentence, label, length = load_data(dir, return_length=True)
+        return sentence, label, length
+
+    def get_length_of_single_judgment(self):
+        return self.length
 
 
 class AbstractDataset(Dataset):

@@ -12,10 +12,20 @@ from transformers import BertModel, BertConfig, AdamW, get_cosine_schedule_with_
 from sklearn.metrics import accuracy_score, classification_report
 from dataset import SentenceDataset
 import warnings, time
+from torchsummary import summary
+from memory_networks import MemoryNetwork
 
 warnings.filterwarnings('ignore')
 plm_path = 'chinese-roberta-wwm-ext'  # 该文件夹下存放三个文件（'vocab.txt', 'pytorch_model.bin', 'config.json'）
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+train_dataset = SentenceDataset(data_path='data/classify_data/train_data.json')
+valid_dataset = SentenceDataset(data_path='data/classify_data/valid_data.json')
+test_dataset = SentenceDataset(data_path='data/classify_data/test_data.json')
+train_length = train_dataset.get_length_of_single_judgment()
+valid_length = valid_dataset.get_length_of_single_judgment()
+test_length = test_dataset.get_length_of_single_judgment()
+
 
 ### 1. 这种方式是不需要手动下载模型文件，在网速快的时候使用
 # tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
@@ -25,24 +35,36 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # 加载bert模型，这个路径文件夹下有bert_config.json配置文件和model.bin模型权重文件
 # bert = BertModel.from_pretrained('chinese-roberta-wwm-ext')
 
-train_dataset = SentenceDataset(data_path='data/classify_data/train_data.json')
-valid_dataset = SentenceDataset(data_path='data/classify_data/valid_data.json')
-test_dataset = SentenceDataset(data_path='data/classify_data/test_data.json')
-
 
 class SentenceClassifyModel(nn.Module):
-    def __init__(self, bert_path, classes=2):
+    def __init__(self, bert_path, mode='train', classes=2):
         super(SentenceClassifyModel, self).__init__()
         self.config = BertConfig.from_pretrained(bert_path)  # 导入模型超参数
         self.bert = BertModel.from_pretrained(bert_path)  # 加载预训练模型权重
         self.dropout = nn.Dropout(self.config.hidden_dropout_prob)
         self.classifier = nn.Linear(self.config.hidden_size, classes)  # 直接分类
+        self.mode = mode
+        self.length = train_length
+        self.memory_slot = torch.empty()
 
     def forward(self, input_ids, attention_mask, token_type_ids=None):
         outputs = self.bert(input_ids=input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids)
         out_pool = outputs[1]  # 池化后的输出 [bs, config.hidden_size]
         logit = self.classifier(out_pool)  # [bs, classes]
         return logit
+
+    def get_memory_embedding(self, input_embedding):
+        if self.mode == 'train':
+            self.length = train_length
+        elif self.mode == 'valid':
+            self.length = valid_length
+        elif self.mode == 'test':
+            self.length = test_length
+        # 开始存储记忆向量
+        if self.memory_slot.size() == torch.Size([]):
+            self.memory_slot = input_embedding
+        else:
+            tor
 
 
 class ModelTrainer(object):
@@ -99,7 +121,7 @@ class ModelTrainer(object):
                 train_accuracy += self.model_evaluate(true_labels, pred_labels)
                 # if (batch_index) % (self.steps // 50) == 0:  # 只打印五次结果
                 print('\r',
-                      "Epoch {:04d} | Step {:04d}/{:04d} | Train Cost Time {:.1f}s | End Time {:.1f}s | Step Time {:.1f}s | Loss {:.4f} | Batch Accuracy {:.4f} | LR {}"
+                      "Epoch {:04d} | Step {:04d}/{:04d} | Train Cost Time {:.1f}s | End Time {:.1f}s | Step Time {:.1f}s | Loss {:.4f} | Accuracy {:.4f} | LR {:.4f}"
                       .format(epoch_index, batch_index, self.steps, time.time() - start_time,
                               (time.time() - start_time) / batch_index * (self.steps - batch_index),
                               (time.time() - start_time) / batch_index,
@@ -170,6 +192,10 @@ class ModelTrainer(object):
 
 
 classify_model = SentenceClassifyModel(plm_path).to(device)
+# test_dataset = SentenceDataset(data_path='data/classify_data/test_data.json')
+# test_loader = DataLoader(test_dataset, batch_size=2, num_workers=0, pin_memory=True)
+# sample = next(iter(test_loader))
+# summary(classify_model, input_size=[(128,), (128,)])
 writer = SummaryWriter('runs/ClassifyModel2.0')  # tensorboard的可视化写入器以及对应的写入路径
 classify_model_train = ModelTrainer(model=classify_model, epochs=2, batch_size=4, writer=writer, is_visual=True)
 classify_model_train.model_train()
