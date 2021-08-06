@@ -3,7 +3,7 @@
   <component name="WebServers">
     <option name="servers">
       <webServer id="5cf6b149-6556-48cb-8986-2587a66c297d" name="1080t">
-        <fileTransfer accessType="SFTP" host="wx.blockelite.cn" port="10430" sshConfigId="cad32eda-7a04-4cea-8caa-d8af02798ac2" sshConfig="root@wx.blockelite.cn:10430 password">
+        <fileTransfer accessType="SFTP" host="120.224.26.25" port="11130" sshConfigId="cad32eda-7a04-4cea-8caa-d8af02798ac2" sshConfig="root@120.224.26.25:11130 password">
           <advancedOptions>
             <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
           </advancedOptions>
