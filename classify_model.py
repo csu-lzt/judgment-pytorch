@@ -64,8 +64,8 @@ class ModelTrainer(object):
         self.model = model
         self.epochs = epochs
         self.writer = writer
-        self.best_model_path = model_save_path + "best_model.pth"
-        self.most_model_path = model_save_path + "most_model.pth"
+        self.best_model_path = model_save_path + "best_model.pkl"
+        self.most_model_path = model_save_path + "most_model.pkl"
         self.best_acc = 0.0
         self.train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=0,
                                        pin_memory=True)  # num_workers=4, pin_memory=True 内存充足时使用，可以加速///1080只能设置num_works=0
@@ -82,13 +82,21 @@ class ModelTrainer(object):
         trainable_num = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
         print(f'Total parameters: {total_num}, Trainable parameters: {trainable_num}')
 
-    def model_train(self):
+    def model_train(self, retrain=False):
         # 模型训练
         optimizer = AdamW(self.model.parameters(), lr=2e-5, weight_decay=1e-4)  # AdamW优化器
         ## 学习率先线性warmup一个epoch，然后cosine式下降。这里给个小提示，一定要加warmup（学习率从0慢慢升上去），要不然你把它去掉试试，基本上收敛不了。
         scheduler = get_cosine_schedule_with_warmup(optimizer, num_warmup_steps=self.steps,
                                                     num_training_steps=(self.epochs) * (self.steps))
-        for i in range(self.epochs):
+        start_epoch = 0
+        if retrain == True:
+            checkpoint = torch.load(self.most_model_path)
+            self.model.load_state_dict(checkpoint['model_state_dict'])
+            optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+            start_epoch = checkpoint['epoch']
+            scheduler.last_epoch = start_epoch
+
+        for i in range(start_epoch, self.epochs):
             start_time = time.time()
             self.model.train()
             epoch_index = i + 1
@@ -136,8 +144,14 @@ class ModelTrainer(object):
                                    global_step=epoch_index)
             if acc > self.best_acc:
                 self.best_acc = acc
-                torch.save(self.model.state_dict(), self.best_model_path)
-            torch.save(self.model.state_dict(), self.most_model_path)
+                torch.save({'model_state_dict': self.model.state_dict(),
+                            'epoch': epoch_index,
+                            'optimizer_state_dict': optimizer.state_dict(),
+                            }, self.best_model_path)
+            torch.save({'model_state_dict': self.model.state_dict(),
+                        'epoch': epoch_index,
+                        'optimizer_state_dict': optimizer.state_dict(),
+                        }, self.most_model_path)
             print("\n current val_acc is {:.4f}, best val_acc is {:.4f}".format(acc, self.best_acc))
             print("Train and Valid Time {:.1f}s \n".format(time.time() - start_time))
 
@@ -163,7 +177,9 @@ class ModelTrainer(object):
         return accuracy_score(np_y_true, np_y_pred)
 
     def model_test(self):
-        self.model.load_state_dict(torch.load(self.best_model_path))
+        checkpoint = torch.load(self.best_model_path)
+        self.model.load_state_dict(checkpoint['model_state_dict'])
+        # 注意加载模型使用 load_state_dict 方法，其参数不是文件路径，而是 torch.load(PATH)
         self.model.eval()
         true_labels, pred_labels = [], []
         with torch.no_grad():
