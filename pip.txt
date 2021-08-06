@@ -1,0 +1,6 @@
+transformers
+jieba
+bert_seq2seq
+python_docx
+xlwt
+torchsummary
