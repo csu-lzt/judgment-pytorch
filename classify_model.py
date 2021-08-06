@@ -18,8 +18,8 @@ from memory_networks import MemoryNetwork
 warnings.filterwarnings('ignore')
 plm_path = 'chinese-roberta-wwm-ext'  # 该文件夹下存放三个文件（'vocab.txt', 'pytorch_model.bin', 'config.json'）
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-summarywrite_path = 'runs/ClassifyModel2.0'
-model_save_path = 'model/cls/'
+summarywrite_path = 'runs/ClassifyModel_MemNN'
+model_save_path = 'model/cls/finetune_with_memNN'
 epochs = 2
 batch_size = 1
 
@@ -150,7 +150,7 @@ class ModelTrainer(object):
                 input_ids = batch['input_ids'].to(device)
                 attention_mask = batch['attention_mask'].to(device)
                 y_true = batch['labels'].to(device)
-                y_pred = self.model(input_ids=input_ids, attention_mask=attention_mask)
+                y_pred = self.model(input_ids=input_ids, attention_mask=attention_mask, mode='valid')
                 true_labels.extend(y_true.cpu().numpy())
                 pred_labels.extend(torch.argmax(y_pred, dim=1).detach().cpu().numpy())
         return accuracy_score(true_labels, pred_labels)
@@ -171,7 +171,7 @@ class ModelTrainer(object):
                 input_ids = batch['input_ids'].to(device)
                 attention_mask = batch['attention_mask'].to(device)
                 y_true = batch['labels'].to(device)
-                y_pred = self.model(input_ids=input_ids, attention_mask=attention_mask)
+                y_pred = self.model(input_ids=input_ids, attention_mask=attention_mask, mode='test')
                 true_labels.extend(y_true.cpu().numpy())
                 pred_labels.extend(torch.argmax(y_pred, dim=1).detach().cpu().numpy())
         print("\n Test Accuracy = {} \n".format(accuracy_score(true_labels, pred_labels)))
