@@ -31,11 +31,6 @@ class MemoryNetwork:
 
     def get_memory_embedding(self, input_embedding, mode_length, mode):
         length_list = mode_length[mode]  # 取哪个数据集  的  文本句子数量
-        # 验证或测试的时候重新初始化
-        if mode == 'valid' or mode == 'test':
-            self.num_sentence = 0  # 计数句子序号
-            self.num_judgment = 0  # 计数文书序号
-            self.memory_slot = torch.empty(1, self.hidden_size).to(device)
         # 开始存储记忆向量
         if self.memory_slot.size() == input_embedding.size():  # 判断记忆槽是否为空
             self.memory_slot = input_embedding

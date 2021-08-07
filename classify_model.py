@@ -50,11 +50,15 @@ class SentenceClassifyModel(nn.Module):
         # 记忆网络模块
         self.memory_network = MemoryNetwork(self.config.hidden_size)
         self.classifier = nn.Linear(self.config.hidden_size * 2, classes)  # 直接分类
+        self.mode = 'train'
 
     def forward(self, input_ids, attention_mask, token_type_ids=None, mode='train'):
         outputs = self.bert(input_ids=input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids)
         out_pool = outputs[1]  # 池化后的输出 [bs, config.hidden_size]
-        out_pool = self.memory_network.get_memory_embedding(out_pool, mode_length, mode)  # 记忆网络模块
+        if mode != self.mode:
+            self.mode = mode
+            self.memory_network = MemoryNetwork(self.config.hidden_size)
+        out_pool = self.memory_network.get_memory_embedding(out_pool, mode_length, mode)
         logit = self.classifier(out_pool)  # [bs, classes]
         return logit
 
