@@ -23,7 +23,7 @@ class SentenceDataset(Dataset):
         encoding = self.tokenizer.encode_plus(self.sentence[index], truncation=True, padding='max_length',
                                               max_length=self.max_length,
                                               return_tensors="pt")
-        item = {key: torch.tensor(val.squeeze()) for key, val in encoding.items()}  # val的shape为[1,128],要转为128，把1维去掉
+        item = {key: val.clone().detach().squeeze() for key, val in encoding.items()}  # val的shape为[1,128],要转为128，把1维去掉
         item['labels'] = torch.tensor(int(self.labels[index]))
         return item
 
