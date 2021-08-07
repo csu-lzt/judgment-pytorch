@@ -15,8 +15,17 @@ class SentenceEmbedding(nn.Module):
 
     def forward(self, input_ids, attention_mask, token_type_ids=None):
         outputs = self.bert(input_ids=input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids)
-        out_pool = outputs[1]  # 池化后的输出 [bs, config.hidden_size]
-        return out_pool
+        last_hidden_state = outputs[0]
+        cls_pooler = outputs[1]  # 池化后的输出 [bs, config.hidden_size]
+        avg_pooler = self.AvgPooling(last_hidden_state, attention_mask)
+        return avg_pooler
+
+    def AvgPooling(self, input_x, mask):
+        input_mask = torch.einsum('blh,bl->blh', input_x, mask)
+        temp1 = torch.sum(input_mask, dim=1)
+        temp2 = torch.sum(mask, dim=1)
+        output = torch.div(torch.sum(input_mask, dim=1).t(), torch.sum(mask, dim=1)).t()  # 除法这里要转置
+        return output
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -46,5 +55,5 @@ with torch.no_grad():
 
 sentence_embeddings = np.array(sentence_embeddings)
 print(sentence_embeddings.shape)
-save_path = 'whitening/embedding_cls.npy'
+save_path = 'whitening/embedding_avg.npy'
 np.save(save_path, sentence_embeddings)

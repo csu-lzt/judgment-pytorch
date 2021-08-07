@@ -370,4 +370,5 @@ if __name__ == '__main__':
     # write_excel(6)
     # for i in range(5):
     #     write_excel(i+1)
-    load_data('data/classify_data/valid_data.json')
+    _, _, length = load_data('data/classify_data/train_data.json', return_length=True)
+    print(length)
