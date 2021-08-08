@@ -19,7 +19,7 @@ def transform_and_normalize(vecs, kernel, bias):
     """
     vecs = (vecs + bias).dot(kernel)
     #return vecs / (vecs ** 2).sum(axis=1, keepdims=True) ** 0.5
-    return vecs
+    return vecs.astype(np.float32)
 
 
 start = time.time()
