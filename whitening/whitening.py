@@ -1,4 +1,5 @@
 import numpy as np
+import time
 
 
 def compute_kernel_bias(vecs):
@@ -13,5 +14,9 @@ def compute_kernel_bias(vecs):
     return W, -mu
 
 
+start = time.time()
 embeddings = np.load('whitening/embedding_avg.npy')
+print('加载完成=====', embeddings.shape)
 kernel, bias = compute_kernel_bias(embeddings)
+end = time.time()
+print('耗时=====', end - start)
