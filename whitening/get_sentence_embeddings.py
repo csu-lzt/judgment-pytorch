@@ -1,3 +1,6 @@
+'''
+第一步，先得到所有的句子向量，分为CLS和AVG两种方法
+'''
 import torch
 import torch.nn as nn
 from transformers import BertModel, BertConfig

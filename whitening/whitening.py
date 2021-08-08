@@ -1,3 +1,6 @@
+'''
+第二步，将第一步得到的句子向量做一个白化操作
+'''
 import numpy as np
 import time
 
@@ -18,7 +21,7 @@ def transform_and_normalize(vecs, kernel, bias):
     """应用变换，然后标准化
     """
     vecs = (vecs + bias).dot(kernel)
-    #return vecs / (vecs ** 2).sum(axis=1, keepdims=True) ** 0.5
+    # return vecs / (vecs ** 2).sum(axis=1, keepdims=True) ** 0.5
     return vecs.astype(np.float32)
 
 
