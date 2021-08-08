@@ -14,9 +14,19 @@ def compute_kernel_bias(vecs):
     return W, -mu
 
 
+def transform_and_normalize(vecs, kernel, bias):
+    """应用变换，然后标准化
+    """
+    vecs = (vecs + bias).dot(kernel)
+    return vecs / (vecs ** 2).sum(axis=1, keepdims=True) ** 0.5
+
+
 start = time.time()
 embeddings = np.load('whitening/embedding_avg.npy')
 print('加载完成=====', embeddings.shape)
 kernel, bias = compute_kernel_bias(embeddings)
-end = time.time()
-print('耗时=====', end - start)
+end1 = time.time()
+print('耗时1=====', end1 - start)
+embeddings_whiten = transform_and_normalize(embeddings, kernel, bias)
+end2 = time.time()
+print('耗时2=====', end2 - end1)
