@@ -21,7 +21,7 @@ class SentenceEmbedding(nn.Module):
         last_hidden_state = outputs[0]
         cls_pooler = outputs[1]  # 池化后的输出 [bs, config.hidden_size]
         avg_pooler = self.AvgPooling(last_hidden_state, attention_mask)
-        return avg_pooler
+        return cls_pooler
 
     def AvgPooling(self, input_x, mask):
         input_mask = torch.einsum('blh,bl->blh', input_x, mask)
@@ -37,7 +37,7 @@ embedding_layer = SentenceEmbedding(bert_path).to(device)
 embedding_layer.eval()
 
 # ================================数据集================================================
-batch_size = 8
+batch_size = 48
 train_dataset = SentenceDataset(data_path='data/classify_data/train_data.json')
 valid_dataset = SentenceDataset(data_path='data/classify_data/valid_data.json')
 test_dataset = SentenceDataset(data_path='data/classify_data/test_data.json')
@@ -45,7 +45,7 @@ train_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=0,
                           pin_memory=True)  # num_workers=4, pin_memory=True 内存充足时使用，可以加速///1080只能设置num_works=0
 valid_loader = DataLoader(valid_dataset, batch_size=batch_size, num_workers=0, pin_memory=True)
 test_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=0, pin_memory=True)
-
+print(batch_size)
 # ======================================================================================
 sentence_embeddings = []
 with torch.no_grad():
@@ -58,5 +58,5 @@ with torch.no_grad():
 
 sentence_embeddings = np.array(sentence_embeddings)
 print(sentence_embeddings.shape)
-save_path = 'whitening/embedding_avg.npy'
+save_path = 'whitening/embedding_cls.npy'
 np.save(save_path, sentence_embeddings)

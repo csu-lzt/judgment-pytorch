@@ -26,7 +26,7 @@ def transform_and_normalize(vecs, kernel, bias):
 
 
 start = time.time()
-embeddings = np.load('whitening/embedding_cls.npy')
+embeddings = np.load('whitening/embedding_avg.npy')
 print('加载完成=====', embeddings.shape)
 kernel, bias = compute_kernel_bias(embeddings)
 end1 = time.time()
@@ -35,5 +35,5 @@ embeddings_whiten = transform_and_normalize(embeddings, kernel, bias)
 end2 = time.time()
 print('耗时2=====', end2 - end1)
 print(embeddings_whiten.shape)
-save_path = 'whitening/embedding_cls_whiten.npy'
+save_path = 'whitening/embedding_avg_whiten.npy'
 np.save(save_path, embeddings_whiten)

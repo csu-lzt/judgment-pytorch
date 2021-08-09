@@ -43,7 +43,14 @@ class MemoryNetwork:
             self.num_sentence = 0
             self.num_judgment += 1
             self.memory_slot = torch.empty(1, self.hidden_size).to(device)
+        if self.num_judgment > len(length_list):
+            self.memory_init()
         return memory_embedding
+
+    def memory_init(self):
+        self.num_sentence = 0  # 计数句子序号
+        self.num_judgment = 0  # 计数文书序号
+        self.memory_slot = torch.empty(1, self.hidden_size).to(device)
 
 
 if __name__ == '__main__':

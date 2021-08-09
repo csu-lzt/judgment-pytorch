@@ -12,6 +12,7 @@ import time
 from utils import load_data
 from tqdm import tqdm
 from sklearn.metrics import accuracy_score, classification_report
+from memory_networks import MemoryNetwork
 
 
 class EmbeddingsDataset(Dataset):
@@ -21,7 +22,7 @@ class EmbeddingsDataset(Dataset):
 
     def __init__(self, embedding_path, data_path):
         self.data = np.load(embedding_path)
-        _, self.labels = load_data(data_path)
+        _, self.labels, self.length = load_data(data_path, return_length=True)
 
     def __getitem__(self, index):
         item = {}
@@ -32,17 +33,22 @@ class EmbeddingsDataset(Dataset):
     def __len__(self):
         return len(self.data)
 
+    def get_length_of_single_judgment(self):
+        return self.length
+
 
 class SentenceClassifyModel(nn.Module):
     def __init__(self, hidden_size=768, classes=2):
         super(SentenceClassifyModel, self).__init__()
-        self.classifier = nn.Linear(hidden_size, classes)  # 直接分类
+        self.memory_network = MemoryNetwork(hidden_size)
+        self.classifier = nn.Linear(hidden_size * 2, classes)  # 直接分类
         # 记忆网络模块
         # self.memory_network = MemoryNetwork(self.config.hidden_size)
         # self.classifier = nn.Linear(self.config.hidden_size * 2, classes)  # 直接分类
         # self.mode = 'train'
 
     def forward(self, embeddings):
+        embeddings = self.memory_network.get_memory_embedding(embeddings, mode_length, mode='train')
         logit = self.classifier(embeddings)  # [bs, classes]
         return logit
 
@@ -159,9 +165,11 @@ class ModelTrainer(object):
 
 # ===============实验设置=====================
 epochs = 20
-batch_size = 8
-train_dataset = EmbeddingsDataset(embedding_path='whitening/embedding_cls.npy',
+batch_size = 1  # 加记忆网络batch_size必须为1！！！classifier的hidden_size也要记得改
+train_dataset = EmbeddingsDataset(embedding_path='whitening/embedding_avg_whiten.npy',
                                   data_path='data/classify_data/train_data.json')
+train_length = train_dataset.get_length_of_single_judgment()
+mode_length = {'train': train_length}
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 model = SentenceClassifyModel().to(device)
