@@ -3,7 +3,7 @@
   <component name="WebServers">
     <option name="servers">
       <webServer id="d7fedc4d-dad9-4a63-8366-ffb70e6daeb8" name="HuaweiCloud">
-        <fileTransfer accessType="SFTP" host="dev-modelarts-cnnorth4.huaweicloud.com" port="32014" sshConfigId="037156a1-e3f9-446d-90af-560801507153" sshConfig="华为云" keyPair="true">
+        <fileTransfer accessType="SFTP" host="dev-modelarts-cnnorth4.huaweicloud.com" port="32555" sshConfigId="f4edfcfa-8ae2-4a2d-b044-9235dddf8f4f" sshConfig="ma-user@dev-modelarts-cnnorth4.huaweicloud.com:32555 key" keyPair="true">
           <advancedOptions>
             <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
           </advancedOptions>

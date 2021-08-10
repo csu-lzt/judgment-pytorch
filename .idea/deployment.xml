@@ -9,6 +9,13 @@
           </mappings>
         </serverdata>
       </paths>
+      <paths name="ma-user@dev-modelarts-cnnorth4.huaweicloud.com:32555 key">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/home/ma-user/work/judgment" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
       <paths name="root@wx.blockelite.cn:12230 password">
         <serverdata>
           <mappings>

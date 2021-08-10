@@ -1,5 +1,6 @@
 '''
 第一步，先得到所有的句子向量，分为CLS和AVG两种方法
+修改save_path和cls/avg_pooler
 '''
 import torch
 import torch.nn as nn

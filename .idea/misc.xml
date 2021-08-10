@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="ProjectRootManager" version="2" project-jdk-name="Remote Python 3.7.10 (sftp://ma-user@dev-modelarts-cnnorth4.huaweicloud.com:32014/home/ma-user/anaconda3/envs/PyTorch-1.4/bin/python)" project-jdk-type="Python SDK" />
+  <component name="ProjectRootManager" version="2" project-jdk-name="Remote Python 3.7.10 (sftp://ma-user@dev-modelarts-cnnorth4.huaweicloud.com:32555/home/ma-user/anaconda3/envs/PyTorch-1.4/bin/python)" project-jdk-type="Python SDK" />
   <component name="PyPackaging">
     <option name="earlyReleasesAsUpgrades" value="true" />
   </component>

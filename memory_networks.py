@@ -18,10 +18,9 @@ def compute_memory_embedding(memory_slot):
     m = memory_slot[:-1]
     mt = m.t()
     um = torch.mm(u, mt)
-    p = nn.Softmax()(um)
+    p = nn.Softmax(dim=1)(um)
     o = torch.mm(p, m)
     return torch.cat((u, o), 1)
-
 
 
 class MemoryNetwork:
@@ -46,7 +45,7 @@ class MemoryNetwork:
             self.num_sentence = 0
             self.num_judgment += 1
             self.memory_slot = torch.empty(1, self.hidden_size).to(device)
-        if self.num_judgment >= len(length_list):
+        if self.num_judgment >= len(length_list):  # 注意实测过要加=，仔细理解
             self.memory_init()
         return memory_embedding
 
@@ -71,6 +70,7 @@ if __name__ == '__main__':
     model = MemoryEmbedding(hidden_size=3).to(device)
     inputs = torch.tensor(
         [[[3, 3, 3]], [[1, 1, 1]], [[2, 2, 2]], [[2, 2, 2]], [[1, 1, 1]], [[1, 1, 1]], [[1, 1, 1]]]).to(device)
+    # int型的tenso会报错
     inputs = inputs.float()
     outputs = []
     for batch in inputs:
