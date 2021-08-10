@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 '''
 纯分类模型的训练和测试
+去掉memory模块，直接在embedding上变动，这里单纯训练线性分类器
 '''
 import torch
 import torch.nn as nn
@@ -12,7 +13,6 @@ import time
 from utils import load_data
 from tqdm import tqdm
 from sklearn.metrics import accuracy_score, classification_report
-from memory_networks import MemoryNetwork
 
 
 class EmbeddingsDataset(Dataset):
@@ -40,15 +40,9 @@ class EmbeddingsDataset(Dataset):
 class SentenceClassifyModel(nn.Module):
     def __init__(self, hidden_size=768, classes=2):
         super(SentenceClassifyModel, self).__init__()
-        self.memory_network = MemoryNetwork(hidden_size)
-        self.classifier = nn.Linear(hidden_size * 2, classes)  # 直接分类
-        # 记忆网络模块
-        # self.memory_network = MemoryNetwork(self.config.hidden_size)
-        # self.classifier = nn.Linear(self.config.hidden_size * 2, classes)  # 直接分类
-        # self.mode = 'train'
+        self.classifier = nn.Linear(hidden_size, classes)  # 直接分类
 
     def forward(self, embeddings):
-        embeddings = self.memory_network.get_memory_embedding(embeddings, mode_length, mode='train')
         logit = self.classifier(embeddings)  # [bs, classes]
         return logit
 
