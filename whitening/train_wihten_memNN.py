@@ -160,12 +160,12 @@ class ModelTrainer(object):
 # ===============实验设置=====================
 # 修改embedding_path和batch_size
 epochs = 20
-batch_size = 8  # 加记忆网络batch_size必须为1！！！classifier的hidden_size也要记得改
+batch_size = 8
 print("batch_size", batch_size)
-train_dataset = EmbeddingsDataset(embedding_path='whitening/embedding_avg_whiten.npy',
+train_dataset = EmbeddingsDataset(embedding_path='whitening/embedding_avg_whiten_memNN.npy',
                                   data_path='data/classify_data/train_data.json')
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-model = SentenceClassifyModel().to(device)
+model = SentenceClassifyModel(hidden_size=1536).to(device)
 model_train = ModelTrainer(model=model, epochs=epochs, batch_size=batch_size)
 model_train.model_train()
