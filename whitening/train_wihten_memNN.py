@@ -162,10 +162,10 @@ class ModelTrainer(object):
 epochs = 20
 batch_size = 8
 print("batch_size", batch_size)
-train_dataset = EmbeddingsDataset(embedding_path='whitening/embedding_avg_whiten_memNN.npy',
+train_dataset = EmbeddingsDataset(embedding_path='whitening/finetuned_embedding_cls.npy',
                                   data_path='data/classify_data/train_data.json')
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-model = SentenceClassifyModel(hidden_size=1536).to(device)
+model = SentenceClassifyModel(hidden_size=768).to(device)
 model_train = ModelTrainer(model=model, epochs=epochs, batch_size=batch_size)
 model_train.model_train()

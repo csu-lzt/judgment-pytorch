@@ -50,7 +50,7 @@ train_length = train_dataset.get_length_of_single_judgment()
 mode_length = {'train': train_length}
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-model = MemoryEmbedding(hidden_size=768).to(device)
+model = MemoryEmbedding(hidden_size=768).to(device)  # 单向时768，双向时记得改为1536
 
 memory_embeddings = []
 for batch in tqdm(train_loader):
